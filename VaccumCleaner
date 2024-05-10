@@ -1,0 +1,160 @@
+#define BLYNK_TEMPLATE_ID "TMPL3OF4JDpsI"
+#define BLYNK_TEMPLATE_NAME "Iot Car Parking"
+#define BLYNK_AUTH_TOKEN "dEo23ej4DqGfFqoBP8kcaTB5L4C0uqc4"
+
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <Servo.h>
+
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);  //SDA = D2, SCL = D1
+
+char auth[] = "dEo23ej4DqGfFqoBP8kcaTB5L4C0uqc4";
+char ssid[] = "sahil";
+char pass[] = "77777777";
+
+Servo servo;  //Servo to Pin D4
+const int irSensorPin1 = D5;  // IR sensor 1 connected to pin D5 (GPIO14)
+const int irSensorPin2 = D6;  // IR sensor 2 connected to pin D6 (GPIO12)
+const int irSensorPin3 = D7;  // IR sensor 3 connected to pin D7 (GPIO13)
+const int irSensorPin4 = D8;  // IR sensor 4 connected to pin D8 (GPIO15)
+const int irSensorPin = D0;   // PIR sensor connected to pin D0 (GPIO16) -> Gate Sensor
+
+
+BlynkTimer timer;
+
+void myTimer() {
+  // Read the state of IR sensors
+  int irSensorState1 = digitalRead(irSensorPin1);
+  int irSensorState2 = digitalRead(irSensorPin2);
+  int irSensorState3 = digitalRead(irSensorPin3);
+  int irSensorState4 = digitalRead(irSensorPin4);
+  int irSensorState = digitalRead(irSensorPin);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+
+  int count = 0;
+
+  lcd.setCursor(0, 0);
+  if (irSensorState1 == LOW) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 1 Filled");
+    Serial.println("Slot 1 Filled");
+    Blynk.virtualWrite(V0, "Filled");
+    Blynk.virtualWrite(V1, 1);
+    count = count + 1;
+    delay(1000);
+    lcd.clear();
+  }
+  if (irSensorState1 == HIGH) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 1 Empty");
+    Serial.println("Slot 1 Empty");
+    Blynk.virtualWrite(V0, "Empty");
+    Blynk.virtualWrite(V1, 0);
+    delay(1000);
+    lcd.clear();
+  }
+
+  lcd.setCursor(0, 1);
+  if (irSensorState2 == LOW) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 2 Filled");
+    Serial.println("Slot 2 Filled");
+    Blynk.virtualWrite(V2, "Filled");
+    Blynk.virtualWrite(V3, 1);
+    count = count + 1;
+    delay(1000);
+    lcd.clear();
+  }
+  if (irSensorState2 == HIGH) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 2 Empty");
+    Serial.println("Slot 2 Empty");
+    Blynk.virtualWrite(V2, "Empty");
+    Blynk.virtualWrite(V3, 0);
+    delay(1000);
+    lcd.clear();
+  }
+
+  if (irSensorState3 == LOW) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 3 Filled");
+    Serial.println("Slot 3 Filled");
+    Blynk.virtualWrite(V4, "Filled");
+    Blynk.virtualWrite(V5, 1);
+    count = count + 1;
+    delay(1000);
+    lcd.clear();
+  }
+  if (irSensorState3 == HIGH) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 3 Empty");
+    Serial.println("Slot 3 Empty");
+    Blynk.virtualWrite(V4, "Empty");
+    Blynk.virtualWrite(V5, 0);
+    delay(1000);
+    lcd.clear();
+  }
+
+  if (irSensorState4 == LOW) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 4 Filled");
+    Serial.println("Slot 4 Filled");
+    Blynk.virtualWrite(V6, "Filled");
+    Blynk.virtualWrite(V7, 1);
+    count = count + 1;
+    delay(1000);
+    lcd.clear();
+  }
+  if (irSensorState4 == HIGH) {
+    lcd.setCursor(0, 0);
+    lcd.print("Slot 4 Empty");
+    Serial.println("Slot 4 Empty");
+    Blynk.virtualWrite(V6, "Empty");
+    Blynk.virtualWrite(V7, 0);
+    delay(1000);
+    lcd.clear();
+  }
+
+
+
+  if (irSensorState == LOW) {
+    if (count < 4) {
+    lcd.setCursor(0, 0);
+    lcd.print("Empty Slots: " + String(4 - count));
+    servo.write(180);
+    delay(3000);
+    servo.write(0);
+    delay(1000);
+    lcd.clear();
+    } else {
+      lcd.setCursor(0, 0);
+      lcd.print("No Empty Slots");
+      delay(1000);
+      lcd.clear();
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(4800);
+  pinMode(irSensorPin1, INPUT);
+  pinMode(irSensorPin2, INPUT);
+  pinMode(irSensorPin3, INPUT);
+  pinMode(irSensorPin4, INPUT);
+  pinMode(irSensorPin, INPUT);
+  servo.attach(2);  //D4
+  servo.write(0);
+  Blynk.begin(auth, ssid, pass);
+  timer.setInterval(1000L, myTimer);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+} 
